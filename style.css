@@ -1,0 +1,254 @@
+body{
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 150%;
+    width: 100%;
+    margin: 0px;
+    background-image: url(img/background.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+header{
+    position: sticky;
+    width: 100%;
+    height: 2.3em;
+    background-color: #000;
+}
+
+#navigation{
+    height: 100%;
+    background-color: #f8f8f8;
+}
+
+#header-line{
+    width: 100%;
+    height: 0.5em;
+    background-color: #4CAF50;
+}
+
+#home-button{
+    margin-top: 0.2%;
+}
+
+#about-button{
+    margin-bottom: 0.3%;
+    margin-left: 1%;
+}
+
+#auth-button{
+    height: 80%;
+    float: right;
+    margin-right: 0.5%;
+    margin-top: 0.3%;
+}
+
+#menu{
+    background-color: #f8f8f8;
+    width: 100%;
+    padding: 1.5em;
+    display: flex;
+}
+table {
+	min-width: 10em;
+	border: 2px solid #4CAF50;
+	border-collapse: collapse; 
+}
+
+
+
+td {
+	border-bottom: 2px solid #4CAF50;
+    text-align: center;
+}
+
+#choosed-section{
+    background-color: #4CAF50;
+    color: #f8f8f8;
+}
+
+#main-menu{
+    margin-left: 2em;
+}
+
+.position{
+    padding: 0.3em;
+    padding-left: 0.1em;
+    background-image: url(img/position-box.png);
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.position-image{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.position-name{
+    margin: 0;
+    text-align: center;
+}
+
+.position-divider{
+    display: block;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+}
+
+.list-of-ingridients{
+    margin: 0;
+    font-size: 75%;
+}
+
+.position-price{
+    margin: 0;
+    margin-top: 0.5em;
+    text-align: center;
+}
+.change-position-button{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.change-position-button-wrapper{
+    padding: 0.1em;
+}
+
+#about-sheet{
+    background-color: #f8f8f8;
+    width: 70%;
+    margin-top: 0%;
+    margin-right: 15%;
+    margin-left: 15%;
+    margin-bottom: 0em;
+}
+
+#image-text-about{
+    display: flex;
+}
+
+#about-img{
+    margin: 1%;
+    margin-top: 2%;
+    max-height: 300px;
+}
+
+#Sub{
+    color: #F2B700;
+}
+#Way{
+    color: #008938;
+}
+
+#about-text{
+    margin-left: 1%;
+    margin-bottom: 0em;
+}
+
+#about-sheet-footer-connect{
+    height: 1em;
+    background-color: #f8f8f8;
+}
+
+footer{
+    
+    margin-top: 0;
+    padding: 1em;
+    box-sizing: border-box;
+    background-color: rgb(77, 76, 76);
+    height: 15em;
+}
+#footer-wrapper{
+    display: flex;
+}
+
+.footer-text{
+    color: #f8f8f8;
+}
+
+.socials{
+    height: 2.5em;
+}
+
+#links-block{
+    display: flex;
+    margin-left: 7.5em;
+}
+
+.link{
+    margin: 1em;
+    color: #f8f8f8;
+}
+
+#adress{
+    float: right;
+    margin-top: 6em;
+    
+}
+
+.auth-block{
+    margin-top: 10%;
+    margin-left: auto;
+    margin-right: auto;
+    background-image: url(img/background-auth.png);
+    background-repeat: no-repeat;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    background-size: contain;
+    width: 50%;
+    min-height: 30em;
+    max-height: 30em;
+}
+
+.auth-text{
+    font-size: xx-large;
+    margin-bottom: 3em;
+}
+
+.login-password-auth{
+    display: grid;
+    width: fit-content;
+    height: fit-content;
+    margin: auto;
+}
+
+.login{
+    margin: auto;
+    display: inline-grid;
+    font-size: 60%;
+    width: fit-content;
+}
+.password{
+    margin: auto;
+    display: inline-grid;
+    font-size: 60%;
+    width: fit-content;
+}
+
+#username{
+    height: 2em;
+    margin-bottom: 2em;
+    border: 1px solid #a7a7a7;
+}
+
+#pass{
+    height: 2em;
+    margin-bottom: 2em;
+    border: 1px solid #a7a7a7;
+}
+
+.registration-offer{
+    text-align: center;
+    margin-top: 0.2em;
+    margin-bottom: 0;
+    font-size: 60%;
+}
+
+.auth-buttons{
+    margin: auto;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    width: 80%;
+}
