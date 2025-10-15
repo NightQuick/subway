@@ -6,6 +6,41 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+    <div class="auth-block">
+         <p class="auth-text" id="registration-text">Чтобы продолжить пользоваться сайтом, пожалуйста, зарегистрируйтесь</p>
+        <div class="registration-block">
+            <div id="registration-row-1">
+                <div class="login">
+                    <label for="username">Почта</label>
+                    <input type="email" id="username" name="username" required>
+                </div>
+
+                <div class="password">
+                    <label for="pass">Пароль</label>
+                    <input type="password" id="pass" name="password" minlength="8" required>
+                </div>
+            </div>
+
+            <div id="registration-row-2">
+                <div class="date-birth">
+                    <label for="date-birth">Дата рождения</label>
+                    <input type="date" id="date-birth" name="date-birth" required>
+                </div>
+
+                <div class="password">
+                    <label for="pass-again">Повторите пароль</label>
+                    <input type="password" id="pass-again" name="password" minlength="8" required>
+                </div>
+            </div>
+
+            <a id="registration-button-wrapper"><img class="auth-buttons" src="img/registration-button.png" alt="Зарегестрироваться"></a>
+            <!-- Здесь скрипт по регистрации -->
+            <p class="registration-offer">Уже есть аккаунт?</p>
+
+            <a id="registration-button-wrapper" href="authentication.html"><img class="auth-buttons" src="img/auth-button.png" alt="Войти"></a>
+        </div>
+
+    </div>
     
 </body>
 </html>

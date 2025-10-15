@@ -207,6 +207,12 @@ footer{
     margin-bottom: 3em;
 }
 
+#registration-text{
+    font-size: 100%;
+    display: ruby-text;
+    margin-top: 0.5em;
+}
+
 .login-password-auth{
     display: grid;
     width: fit-content;
@@ -226,14 +232,38 @@ footer{
     font-size: 60%;
     width: fit-content;
 }
+.date-birth{
+    margin: auto;
+    display: inline-grid;
+    font-size: 60%;
+    width: fit-content;
+}
 
 #username{
+    width: 13em;
     height: 2em;
     margin-bottom: 2em;
     border: 1px solid #a7a7a7;
 }
 
 #pass{
+    width: 13em;
+    height: 2em;
+    margin-bottom: 2em;
+    border: 1px solid #a7a7a7;
+}
+
+#date-birth{
+    margin: 0;
+    width: 13em;
+    height: 2em;
+    margin-bottom: 2em;
+    border: 1px solid #a7a7a7;
+}
+
+#pass-again{
+    margin: 0;
+    width: 13em;
     height: 2em;
     margin-bottom: 2em;
     border: 1px solid #a7a7a7;
@@ -251,4 +281,21 @@ footer{
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     width: 80%;
+}
+
+#registration-button-wrapper{
+    margin: auto;
+    display: inline-grid;
+    width: fit-content;
+}
+
+.registration-block{
+    display: grid;
+    width: fit-content;
+    height: fit-content;
+    margin: auto;
+}
+
+#registration-row-2{
+    display: block;
 }
