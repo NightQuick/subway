@@ -31,18 +31,6 @@ header{
     margin-top: 0.2%;
 }
 
-#about-button{
-    margin-bottom: 0.3%;
-    margin-left: 1%;
-}
-
-#auth-button{
-    height: 80%;
-    float: right;
-    margin-right: 0.5%;
-    margin-top: 0.3%;
-}
-
 #menu{
     background-color: #f8f8f8;
     width: 100%;
@@ -108,8 +96,13 @@ td {
 }
 .change-position-button{
     display: block;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 0.5em;
+    border-width: 0;
+    background-color: #4CAF50;
+    color: #f8f8f8;
+    font-size: 1em;
+    border-radius: 0.2em;
+    width: 90%;
 }
 
 .change-position-button-wrapper{
@@ -192,14 +185,14 @@ footer{
     margin-top: 10%;
     margin-left: auto;
     margin-right: auto;
-    background-image: url(img/background-auth.png);
-    background-repeat: no-repeat;
+    background-color: #f8f8f8;
+    border-radius: 1em;
     padding-left: 0.5em;
     padding-right: 0.5em;
     background-size: contain;
     width: 50%;
-    min-height: 30em;
-    max-height: 30em;
+    min-height: 25em;
+    max-height: 25em;
 }
 
 .auth-text{
@@ -280,7 +273,15 @@ footer{
     margin: auto;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
-    width: 80%;
+    width: 7.8em;
+    font-size: 1em;
+    border-width: 0;
+    background-color: #4CAF50;
+    color: #f8f8f8;
+}
+#auth-button-register{
+    width: 10em;
+    font-size: 0.9em;
 }
 
 #registration-button-wrapper{
@@ -298,4 +299,38 @@ footer{
 
 #registration-row-2{
     display: block;
+}
+
+#header-button-about{
+    display: inline;
+    margin-bottom: 2em;
+    margin-left: 1%;
+    height: 1em;
+    width: 4em;
+    font-size: 1.9em;
+    color: #4CAF50;
+}
+
+#header-button-auth{
+    height: 80%;
+    float: right;
+    margin-right: 0.5%;
+    margin-top: 0.3%;
+    border-width: 0;
+    background-color: #4CAF50;
+    color: #f8f8f8;
+    font-size: 1em;
+    border-radius: 0.2em;
+    cursor: pointer;
+}
+
+button:focus {
+    outline: none;
+}
+
+a:link,
+a:visited,
+a:hover,
+a:active {
+    text-decoration: none;
 }
