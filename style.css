@@ -34,13 +34,14 @@ header{
 #menu{
     background-color: #f8f8f8;
     width: 100%;
-    padding: 1.5em;
+    padding-top: 1.5em ;
     display: flex;
 }
 table {
 	min-width: 10em;
 	border: 2px solid #4CAF50;
 	border-collapse: collapse; 
+    margin-left: 1.5em;
 }
 
 
@@ -56,15 +57,19 @@ td {
 }
 
 #main-menu{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     margin-left: 2em;
 }
 
 .position{
     padding: 0.3em;
     padding-left: 0.1em;
-    background-image: url(img/position-box.png);
-    background-repeat: no-repeat;
-    background-size: contain;
+    border-radius: 1em;
+    border: .2em solid #4CAF50;
+    margin-bottom: 3em;
+    margin-right: 0.5em;
 }
 
 .position-image{
@@ -82,6 +87,9 @@ td {
     display: block;
     margin-left: 0.5em;
     margin-right: 0.5em;
+    background-color: #000;
+    width: 11em;
+    height: 1px;
 }
 
 .list-of-ingridients{
@@ -333,4 +341,25 @@ a:visited,
 a:hover,
 a:active {
     text-decoration: none;
+}
+
+button{
+    cursor: pointer;
+}
+
+#auth-img{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 4em;
+    cursor: pointer;
+}
+
+#page-lister{
+    margin-top: auto;
+    margin-left: auto;
+    margin-right: auto;
+}
+#menu-wrapper{
+    display: grid;
 }
