@@ -36,7 +36,12 @@ app.post("/api/add", (req, res) => {
     });
   }
 
-  let sql = `INSERT into ${whereAdd}(${whatAdd})values(${values})`;
+  let add = [];
+  for (let value of values) {
+    add.push('"' + value + '"');
+  }
+
+  let sql = `INSERT into ${whereAdd}(${whatAdd})values(${add})`;
   const params = [];
 
   console.log("Выполняем SQL:", sql);
