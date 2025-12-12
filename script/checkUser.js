@@ -1,4 +1,4 @@
-async function main(login, password) {
+export async function checkUser(login, password) {
   try {
     const response = await fetch("http://localhost:3000/api/checkUser", {
       method: "POST",
@@ -10,7 +10,15 @@ async function main(login, password) {
         password,
       }),
     });
-
+    fetch("http://localhost:3000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // ВАЖНО: отправляем куки
+      body: JSON.stringify({
+        login: login,
+        password: password,
+      }),
+    });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -20,17 +28,5 @@ async function main(login, password) {
   } catch (error) {
     console.error(`Ошибка: ${error.message}`);
     return { success: false, error: error.message };
-  }
-}
-
-export async function checkUser(login, password) {
-  try {
-    const result = await main(login, password);
-    console.log("Результат:", result);
-
-    // Если нужно строковое представление для отладки
-    console.log("Результат (JSON):", JSON.stringify(result, null, 2));
-  } catch (error) {
-    console.error("Ошибка в main:", error);
   }
 }

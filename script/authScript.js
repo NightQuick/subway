@@ -6,9 +6,16 @@ let loginBox = document.getElementById("username"),
 let tryAuth, tryStatus;
 
 document.getElementById("enter").addEventListener("click", () => {
-  tryAuth = checkUser(loginBox.value, passwordBox.value);
-  console.log(tryAuth);
-  if (tryAuth["succsess"]) {
-    window.location.href = "script/authScript.js";
-  }
+  checkUser(loginBox.value, passwordBox.value)
+    .then((result) => {
+      console.log("Результат:", result);
+      console.log("Успех:", result.success);
+
+      if (result.success) {
+        window.location.href = "menu.html";
+      }
+    })
+    .catch((error) => {
+      console.error("Ошибка:", error);
+    });
 });

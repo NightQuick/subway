@@ -2,9 +2,16 @@ import express from "express";
 import mysql from "mysql2";
 import cors from "cors";
 import { findData } from "./script/findData.js";
+import session from "express-session";
+import bodyParser from "body-parser";
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5500",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Подключение к БД
@@ -24,6 +31,7 @@ connection.connect((err) => {
   console.log("Подключено к MySQL");
 });
 
+// проверка авторизации
 async function checkUser(user) {
   try {
     let realUser = await findData(
@@ -202,6 +210,173 @@ app.post("/api/checkUser", async (req, res) => {
       res.json(results);
     });
   });
+}
+
+// сессии
+{
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json());
+
+  // Настройка сессий
+  app.use(
+    session({
+      secret: "your-secret-key-change-in-production",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // 24 часа
+        httpOnly: true,
+      },
+    })
+  );
+
+  const requireAuth = (req, res, next) => {
+    if (req.session && req.session.userId) {
+      return next();
+    }
+    res.status(401).json({
+      success: false,
+      message: "Требуется авторизация",
+    });
+
+    app.get("/api/user", (req, res) => {
+      if (req.session.userId) {
+        // Получаем данные пользователя из БД
+        const sql = "SELECT id, login FROM users WHERE id = ?";
+        connection.query(sql, [req.session.userId], (err, results) => {
+          if (err) {
+            console.error("Ошибка получения пользователя:", err);
+            return res.status(500).json({
+              success: false,
+              message: "Ошибка сервера",
+            });
+          }
+
+          if (results.length > 0) {
+            res.json({
+              success: true,
+              user: results[0],
+            });
+          } else {
+            // Пользователь не найден в БД, очищаем сессию
+            req.session.destroy();
+            res.json({ success: false, user: null });
+          }
+        });
+      } else {
+        res.json({ success: false, user: null });
+      }
+    });
+
+    // 2. Вход в систему
+    app.post("/api/login", async (req, res) => {
+      const { login, password } = req.body;
+
+      if (!login || !password) {
+        return res.status(400).json({
+          success: false,
+          message: "Не указан логин или пароль",
+        });
+      }
+
+      try {
+        // Используем вашу существующую функцию checkUser
+        const authResult = await checkUser({ login, password });
+
+        if (!authResult.success) {
+          return res.status(401).json(authResult);
+        }
+
+        // Получаем ID пользователя из БД
+        const findUserSql = "SELECT id, login FROM users WHERE login = ?";
+        connection.query(findUserSql, [login], (err, results) => {
+          if (err) {
+            console.error("Ошибка поиска пользователя:", err);
+            return res.status(500).json({
+              success: false,
+              message: "Ошибка сервера",
+            });
+          }
+
+          if (results.length === 0) {
+            return res.status(401).json({
+              success: false,
+              message: "Пользователь не найден",
+            });
+          }
+
+          const user = results[0];
+
+          // Сохраняем данные в сессии
+          req.session.userId = user.id;
+          req.session.login = user.login;
+
+          res.json({
+            success: true,
+            message: "Вход выполнен успешно",
+            user: {
+              id: user.id,
+              login: user.login,
+            },
+          });
+        });
+      } catch (error) {
+        console.error("Ошибка входа:", error);
+        res.status(500).json({
+          success: false,
+          message: "Ошибка сервера",
+        });
+      }
+    });
+
+    // 3. Выход из системы
+    app.post("/api/logout", (req, res) => {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Ошибка при выходе:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Ошибка при выходе",
+          });
+        }
+        res.json({
+          success: true,
+          message: "Выход выполнен успешно",
+        });
+      });
+    });
+
+    // 4. Проверка авторизации (упрощенная)
+    app.get("/api/check-auth", (req, res) => {
+      if (req.session.userId) {
+        res.json({
+          success: true,
+          authenticated: true,
+          user: {
+            id: req.session.userId,
+            login: req.session.login,
+          },
+        });
+      } else {
+        res.json({
+          success: true,
+          authenticated: false,
+        });
+      }
+    });
+
+    // 5. Пример защищенного маршрута
+    app.get("/api/protected", requireAuth, (req, res) => {
+      res.json({
+        success: true,
+        message: "Это защищенный маршрут",
+        user: {
+          id: req.session.userId,
+          login: req.session.login,
+        },
+      });
+    });
+  };
 }
 const PORT = 3000;
 app.listen(PORT, () => {
