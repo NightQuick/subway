@@ -1,4 +1,4 @@
-export async function findData(whatFind, whereFind, byWhat, value) {
+export async function findData(whatFind, whereFind, byWhat, value, limit) {
   try {
     const response = await fetch("http://localhost:3000/api/find", {
       method: "POST",
@@ -10,11 +10,12 @@ export async function findData(whatFind, whereFind, byWhat, value) {
         whereFind,
         byWhat,
         value,
+        limit,
       }),
     });
 
     const data = await response.json();
-    return JSON.stringify(data, null, 2);
+    return data;
   } catch (error) {
     console.log(`Ошибка: ${error.message}</div>`);
   }
