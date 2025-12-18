@@ -1,18 +1,43 @@
 import express from "express";
 import mysql from "mysql2";
-import cors from "cors";
-import { findData } from "./script/findData.js";
 import session from "express-session";
-import bodyParser from "body-parser";
 
 const app = express();
+
+// Middleware
+app.use(express.json());
+
+// CORS настройка
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// Сессия
 app.use(
-  cors({
-    origin: "http://localhost:5500",
-    credentials: true,
+  session({
+    secret: "your-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 24,
+      httpOnly: true,
+      sameSite: "lax",
+    },
   })
 );
-app.use(express.json());
 
 // Подключение к БД
 const connection = mysql.createConnection({
@@ -31,49 +56,150 @@ connection.connect((err) => {
   console.log("Подключено к MySQL");
 });
 
-// проверка авторизации
-async function checkUser(user) {
-  try {
-    let realUser = await findData(
-      ["login", "password_hash"],
-      "users",
-      "login",
-      user.login
-    );
-    console.log(typeof realUser[0]);
-    if (typeof realUser[0] != "object") {
-      return { success: false, message: "User not found" };
-    }
-    console.log("полученный пользователь: ", realUser[0]);
-    if (user.password !== realUser[0].password_hash) {
-      console.log(user.password);
-      console.log(realUser[0].password_hash);
-      return { success: false, message: "Invalid password" };
-    }
-
-    return { success: true, message: "User authenticated" };
-  } catch (error) {
-    console.error("Error in checkUser:", error);
-    return { success: false, message: "Server error" };
-  }
+// Функция для поиска пользователя по логину
+function findUserByLogin(login) {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT id, login, password_hash FROM users WHERE login = ?";
+    connection.query(sql, [login], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results);
+      }
+    });
+  });
 }
 
-//запрос на существование пользователя в системе
-app.post("/api/checkUser", async (req, res) => {
+// Вход в систему
+app.post("/api/login", async (req, res) => {
   try {
-    const result = await checkUser(req.body);
-    res.json(result);
+    const { login, password } = req.body;
+
+    if (!login || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Логин и пароль обязательны",
+      });
+    }
+
+    // Ищем пользователя
+    const users = await findUserByLogin(login);
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Пользователь не найден",
+      });
+    }
+
+    const user = users[0];
+
+    // Проверяем пароль
+    if (password !== user.password_hash) {
+      return res.status(401).json({
+        success: false,
+        message: "Неверный пароль",
+      });
+    }
+
+    // Устанавливаем сессию
+    req.session.userId = user.id;
+    req.session.userLogin = user.login;
+
+    res.json({
+      success: true,
+      message: "Успешный вход",
+      user: {
+        id: user.id,
+        login: user.login,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error("Login error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Внутренняя ошибка сервера",
+    });
   }
 });
+
+// Получение текущего пользователя
+app.get("/api/current-user", (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({
+      success: false,
+      error: "Не авторизован",
+    });
+  }
+
+  res.json({
+    success: true,
+    user: {
+      id: req.session.userId,
+      login: req.session.userLogin,
+    },
+  });
+});
+
+// Выход из системы
+app.post("/api/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Ошибка при удалении сессии:", err);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка выхода",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Успешный выход",
+    });
+  });
+});
+
+// Тестовый эндпоинт
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "Сервер работает!",
+  });
+});
+
+app.post("/api/checkUser", async (req, res) => {
+  try {
+    const { login, password } = req.body;
+    const users = await findUserByLogin(login);
+
+    if (users.length === 0) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    const user = users[0];
+
+    if (password !== user.password_hash) {
+      return res.json({ success: false, message: "Invalid password" });
+    }
+
+    return res.json({
+      success: true,
+      message: "User authenticated",
+      user: {
+        id: user.id,
+        login: user.login,
+      },
+    });
+  } catch (error) {
+    console.error("Error in checkUser:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 //запросы в бд
 {
   // запрос добавления в бд
   app.post("/api/add", (req, res) => {
     const { whereAdd, whatAdd = [], values = [] } = req.body;
-
-    console.log("Получен запрос:", { whereAdd, whatAdd, values });
 
     // Проверка обязательных полей
     if (!whereAdd || !whatAdd || !values) {
@@ -90,296 +216,243 @@ app.post("/api/checkUser", async (req, res) => {
     let sql = `INSERT into ${whereAdd}(${whatAdd})values(${add})`;
     const params = [];
 
-    console.log("Выполняем SQL:", sql);
-
     connection.query(sql, params, (err, results) => {
       if (err) {
-        console.error("Ошибка SQL:", err);
         return res.status(500).json({ error: err.message });
       }
-      console.log("Результаты:", results);
       res.json(results);
     });
   });
 
-  // Запрос поиска в бд
-  app.post("/api/find", (req, res) => {
-    const { whatFind, whereFind, byWhat, value, limit } = req.body;
+  //бд запросы
+  {
+    // Запрос поиска в бд
+    app.post("/api/find", (req, res) => {
+      const { whatFind, whereFind, byWhat, value, limit } = req.body;
 
-    console.log("Получен запрос:", {
-      whatFind,
-      whereFind,
-      byWhat,
-      value,
-      limit,
-    });
-
-    // Проверка обязательных полей
-    if (!whatFind || !whereFind) {
-      return res
-        .status(400)
-        .json({ error: "Не указаны обязательные поля: whatFind, whereFind" });
-    }
-
-    let sql = `SELECT ${whatFind} FROM ${whereFind}`;
-    const params = [];
-
-    if (byWhat && value) {
-      sql += ` WHERE ${byWhat} = ?`;
-      params.push(value);
-    }
-    if (limit) {
-      sql += ` LIMIT ${limit}`;
-      params.push(value);
-    }
-
-    console.log("Выполняем SQL:", sql);
-    console.log("Параметры:", params);
-
-    connection.query(sql, params, (err, results) => {
-      if (err) {
-        console.error("Ошибка SQL:", err);
-        return res.status(500).json({ error: err.message });
-      }
-      console.log("Результаты:", results);
-      res.json(results);
-    });
-  });
-
-  //удаление данных в бд
-  app.post("/api/del", (req, res) => {
-    const { whereDel, byWhat, value } = req.body;
-
-    console.log("Получен запрос:", { whereDel, byWhat, value });
-
-    // Проверка обязательных полей
-    if (!whereDel || !byWhat || !value) {
-      return res.status(400).json({
-        error: "Не указаны обязательные поля: whereDel, byWhat, value",
-      });
-    }
-
-    let sql = `DELETE FROM ${whereDel} WHERE ${byWhat}="${value}"`;
-    const params = [];
-
-    console.log("Выполняем SQL:", sql);
-
-    connection.query(sql, params, (err, results) => {
-      if (err) {
-        console.error("Ошибка SQL:", err);
-        return res.status(500).json({ error: err.message });
-      }
-      console.log("Результаты:", results);
-      res.json(results);
-    });
-  });
-
-  //изменение данных в бд
-  app.post("/api/upd", (req, res) => {
-    const { whereUpd, whatUpd = [], values = [], byWhat, byValue } = req.body;
-
-    console.log("Получен запрос:", {
-      whereUpd,
-      whatUpd,
-      values,
-      byWhat,
-      byValue,
-    });
-
-    // Проверка обязательных полей
-    if (!whereUpd || !whatUpd || !values || !byWhat || !byValue) {
-      return res.status(400).json({
-        error: "Не указаны обязательные поля: whereDel, byWhat, value",
-      });
-    }
-    let upd = [];
-    for (let i = 0; i < whatUpd.length; i++) {
-      upd.push(whatUpd[i] + '="' + values[i] + '"');
-    }
-    let sql = `UPDATE ${whereUpd} set ${upd} WHERE ${byWhat}="${byValue}"`;
-    const params = [];
-
-    console.log("Выполняем SQL:", sql);
-
-    connection.query(sql, params, (err, results) => {
-      if (err) {
-        console.error("Ошибка SQL:", err);
-        return res.status(500).json({ error: err.message });
-      }
-      console.log("Результаты:", results);
-      res.json(results);
-    });
-  });
-}
-
-// сессии
-{
-  app.use(bodyParser.urlencoded({ extended: true }));
-  app.use(bodyParser.json());
-
-  // Настройка сессий
-  app.use(
-    session({
-      secret: "your-secret-key-change-in-production",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // 24 часа
-        httpOnly: true,
-      },
-    })
-  );
-
-  const requireAuth = (req, res, next) => {
-    if (req.session && req.session.userId) {
-      return next();
-    }
-    res.status(401).json({
-      success: false,
-      message: "Требуется авторизация",
-    });
-
-    app.get("/api/user", (req, res) => {
-      if (req.session.userId) {
-        // Получаем данные пользователя из БД
-        const sql = "SELECT id, login FROM users WHERE id = ?";
-        connection.query(sql, [req.session.userId], (err, results) => {
-          if (err) {
-            console.error("Ошибка получения пользователя:", err);
-            return res.status(500).json({
-              success: false,
-              message: "Ошибка сервера",
-            });
-          }
-
-          if (results.length > 0) {
-            res.json({
-              success: true,
-              user: results[0],
-            });
-          } else {
-            // Пользователь не найден в БД, очищаем сессию
-            req.session.destroy();
-            res.json({ success: false, user: null });
-          }
-        });
-      } else {
-        res.json({ success: false, user: null });
-      }
-    });
-
-    // 2. Вход в систему
-    app.post("/api/login", async (req, res) => {
-      const { login, password } = req.body;
-
-      if (!login || !password) {
-        return res.status(400).json({
-          success: false,
-          message: "Не указан логин или пароль",
-        });
+      // Проверка обязательных полей
+      if (!whatFind || !whereFind) {
+        return res
+          .status(400)
+          .json({ error: "Не указаны обязательные поля: whatFind, whereFind" });
       }
 
-      try {
-        // Используем вашу существующую функцию checkUser
-        const authResult = await checkUser({ login, password });
+      let sql = `SELECT ${whatFind} FROM ${whereFind}`;
+      const params = [];
 
-        if (!authResult.success) {
-          return res.status(401).json(authResult);
-        }
-
-        // Получаем ID пользователя из БД
-        const findUserSql = "SELECT id, login FROM users WHERE login = ?";
-        connection.query(findUserSql, [login], (err, results) => {
-          if (err) {
-            console.error("Ошибка поиска пользователя:", err);
-            return res.status(500).json({
-              success: false,
-              message: "Ошибка сервера",
-            });
-          }
-
-          if (results.length === 0) {
-            return res.status(401).json({
-              success: false,
-              message: "Пользователь не найден",
-            });
-          }
-
-          const user = results[0];
-
-          // Сохраняем данные в сессии
-          req.session.userId = user.id;
-          req.session.login = user.login;
-
-          res.json({
-            success: true,
-            message: "Вход выполнен успешно",
-            user: {
-              id: user.id,
-              login: user.login,
-            },
-          });
-        });
-      } catch (error) {
-        console.error("Ошибка входа:", error);
-        res.status(500).json({
-          success: false,
-          message: "Ошибка сервера",
-        });
+      if (byWhat && value) {
+        sql += ` WHERE ${byWhat} = ?`;
+        params.push(value);
       }
-    });
+      if (limit) {
+        sql += ` LIMIT ${limit}`;
+        params.push(value);
+      }
 
-    // 3. Выход из системы
-    app.post("/api/logout", (req, res) => {
-      req.session.destroy((err) => {
+      connection.query(sql, params, (err, results) => {
         if (err) {
-          console.error("Ошибка при выходе:", err);
-          return res.status(500).json({
-            success: false,
-            message: "Ошибка при выходе",
-          });
+          return res.status(500).json({ error: err.message });
         }
-        res.json({
-          success: true,
-          message: "Выход выполнен успешно",
-        });
+        res.json(results);
       });
     });
 
-    // 4. Проверка авторизации (упрощенная)
-    app.get("/api/check-auth", (req, res) => {
-      if (req.session.userId) {
-        res.json({
-          success: true,
-          authenticated: true,
-          user: {
-            id: req.session.userId,
-            login: req.session.login,
-          },
-        });
-      } else {
-        res.json({
-          success: true,
-          authenticated: false,
+    //удаление данных в бд
+    app.post("/api/del", (req, res) => {
+      const { whereDel, byWhat, value } = req.body;
+
+      // Проверка обязательных полей
+      if (!whereDel || !byWhat || !value) {
+        return res.status(400).json({
+          error: "Не указаны обязательные поля: whereDel, byWhat, value",
         });
       }
-    });
 
-    // 5. Пример защищенного маршрута
-    app.get("/api/protected", requireAuth, (req, res) => {
-      res.json({
-        success: true,
-        message: "Это защищенный маршрут",
-        user: {
-          id: req.session.userId,
-          login: req.session.login,
-        },
+      let sql = `DELETE FROM ${whereDel} WHERE ${byWhat}="${value}"`;
+      const params = [];
+
+      connection.query(sql, params, (err, results) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        res.json(results);
       });
     });
-  };
+
+    //изменение данных в бд
+    app.post("/api/upd", (req, res) => {
+      const { whereUpd, whatUpd = [], values = [], byWhat, byValue } = req.body;
+
+      // Проверка обязательных полей
+      if (!whereUpd || !whatUpd || !values || !byWhat || !byValue) {
+        return res.status(400).json({
+          error: "Не указаны обязательные поля: whereDel, byWhat, value",
+        });
+      }
+      let upd = [];
+      for (let i = 0; i < whatUpd.length; i++) {
+        upd.push(whatUpd[i] + '="' + values[i] + '"');
+      }
+      let sql = `UPDATE ${whereUpd} set ${upd} WHERE ${byWhat}="${byValue}"`;
+      const params = [];
+
+      connection.query(sql, params, (err, results) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        res.json(results);
+      });
+    });
+  }
 }
+// 1. Поиск по нескольким условиям (для ингредиентов по имени)
+app.post("/api/find-multi", (req, res) => {
+  const { whatFind, whereFind, conditions } = req.body;
+
+  if (!whatFind || !whereFind || !conditions) {
+    return res.status(400).json({
+      error: "Не указаны обязательные поля: whatFind, whereFind, conditions",
+    });
+  }
+
+  let sql = `SELECT ${whatFind} FROM ${whereFind} WHERE `;
+  const params = [];
+  const whereClauses = [];
+
+  conditions.forEach((condition, index) => {
+    whereClauses.push(`${condition.byWhat} = ?`);
+    params.push(condition.value);
+  });
+
+  sql += whereClauses.join(" AND ");
+
+  connection.query(sql, params, (err, results) => {
+    if (err) {
+      console.error("Ошибка запроса find-multi:", err);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(results);
+  });
+});
+
+// 2. INSERT с возвратом ID (ваш /api/add не возвращает ID)
+app.post("/api/insert-return-id", (req, res) => {
+  const { table, data } = req.body;
+
+  if (!table || !data) {
+    return res.status(400).json({
+      error: "Не указаны обязательные поля: table, data",
+    });
+  }
+
+  const columns = Object.keys(data).join(", ");
+  const placeholders = Object.keys(data)
+    .map(() => "?")
+    .join(", ");
+  const values = Object.values(data);
+
+  let sql = `INSERT INTO ${table} (${columns}) VALUES (${placeholders})`;
+
+  connection.query(sql, values, (err, results) => {
+    if (err) {
+      console.error("Ошибка INSERT:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      id: results.insertId,
+    });
+  });
+});
+
+// 3. Удаление по нескольким условиям
+app.post("/api/delete-multi", (req, res) => {
+  const { table, conditions } = req.body;
+
+  if (!table || !conditions) {
+    return res.status(400).json({
+      error: "Не указаны обязательные поля: table, conditions",
+    });
+  }
+
+  let sql = `DELETE FROM ${table} WHERE `;
+  const params = [];
+  const whereClauses = [];
+
+  conditions.forEach((condition) => {
+    whereClauses.push(`${condition.field} = ?`);
+    params.push(condition.value);
+  });
+
+  sql += whereClauses.join(" AND ");
+
+  connection.query(sql, params, (err, results) => {
+    if (err) {
+      console.error("Ошибка удаления:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      affectedRows: results.affectedRows,
+    });
+  });
+});
+
+// 4. UPDATE с JSON данными (ваш /api/upd работает только со строками)
+app.post("/api/update-json", (req, res) => {
+  const { table, data, conditions } = req.body;
+
+  if (!table || !data || !conditions) {
+    return res.status(400).json({
+      error: "Не указаны обязательные поля: table, data, conditions",
+    });
+  }
+
+  const setClauses = [];
+  const whereClauses = [];
+  const params = [];
+
+  // SET часть
+  Object.entries(data).forEach(([key, value]) => {
+    setClauses.push(`${key} = ?`);
+    params.push(value);
+  });
+
+  // WHERE часть
+  conditions.forEach((condition) => {
+    whereClauses.push(`${condition.field} = ?`);
+    params.push(condition.value);
+  });
+
+  const sql = `UPDATE ${table} SET ${setClauses.join(
+    ", "
+  )} WHERE ${whereClauses.join(" AND ")}`;
+
+  connection.query(sql, params, (err, results) => {
+    if (err) {
+      console.error("Ошибка UPDATE:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message,
+      });
+    }
+
+    res.json({
+      success: true,
+      affectedRows: results.affectedRows,
+    });
+  });
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Сервер запущен на http://localhost:${PORT}`);
-  console.log(`Тестовый URL: http://localhost:${PORT}/api/test`);
 });

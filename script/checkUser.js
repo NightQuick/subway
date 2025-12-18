@@ -1,32 +1,35 @@
-export async function checkUser(login, password) {
+async function checkUser(user) {
   try {
-    const response = await fetch("http://localhost:3000/api/checkUser", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        login,
-        password,
-      }),
-    });
-    fetch("http://localhost:3000/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", // ВАЖНО: отправляем куки
-      body: JSON.stringify({
-        login: login,
-        password: password,
-      }),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    let realUser = await findData(
+      ["id", "login", "password_hash"],
+      "users",
+      "login",
+      user.login
+    );
+
+    console.log(typeof realUser[0]);
+    if (typeof realUser[0] != "object") {
+      return { success: false, message: "User not found" };
+    }
+    console.log("полученный пользователь: ", realUser[0]);
+
+    // Сравнение пароля напрямую (без хэширования)
+    if (user.password !== realUser[0].password_hash) {
+      console.log(user.password);
+      console.log(realUser[0].password_hash);
+      return { success: false, message: "Invalid password" };
     }
 
-    const data = await response.json();
-    return data;
+    return {
+      success: true,
+      message: "User authenticated",
+      user: {
+        id: realUser[0].id,
+        login: realUser[0].login,
+      },
+    };
   } catch (error) {
-    console.error(`Ошибка: ${error.message}`);
-    return { success: false, error: error.message };
+    console.error("Error in checkUser:", error);
+    return { success: false, message: "Server error" };
   }
 }

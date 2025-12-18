@@ -17,6 +17,10 @@ export async function findData(whatFind, whereFind, byWhat, value, limit) {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.log(`Ошибка: ${error.message}</div>`);
+    console.log(`Ошибка: ${error.message}`);
+    return []; // Возвращаем пустой массив при ошибке
   }
 }
+
+// Экспортируем по умолчанию
+export default findData;

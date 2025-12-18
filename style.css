@@ -363,3 +363,123 @@ button{
 #menu-wrapper{
     display: grid;
 }
+#profile-container{
+    display: flex;
+    float:  right;
+    margin-bottom: 0;
+}
+#login-box{
+    margin-bottom: 0;
+    margin-right: .5em;
+}
+
+#profileImage{
+    width: 2.3em;
+    height: 2.3em;
+}
+/* Добавьте или измените эти стили в style.css */
+
+.position{
+    padding: 0.3em;
+    padding-left: 0.1em;
+    border-radius: 1em;
+    border: .2em solid #4CAF50;
+    margin-bottom: 3em;
+    margin-right: 0.5em;
+    width: 350px; /* Фиксированная ширина */
+    box-sizing: border-box;
+    display: flex; /* Добавляем flex для карточки */
+    flex-direction: column; /* Элементы в колонку */
+    min-height: 400px; /* Минимальная высота для всех карточек */
+    position: relative; /* Для позиционирования кнопки */
+}
+
+/* Кнопка "Изменить" фиксируется внизу */
+.change-position-button{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    border-width: 0;
+    background-color: #4CAF50;
+    color: #f8f8f8;
+    font-size: 1em;
+    border-radius: 0.2em;
+    width: 90%;
+    padding: 8px 0;
+    cursor: pointer;
+    margin-top: auto; /* Толкает кнопку вниз */
+}
+
+/* ИЛИ альтернативный вариант с абсолютным позиционированием: */
+
+
+.position {
+    position: relative;
+    padding-bottom: 50px; /* Место для кнопки */
+}
+
+.change-position-button{
+    position: absolute;
+    bottom: 10px;
+    left: 5%;
+    right: 5%;
+    width: 90%;
+    margin: 0;
+}
+/* Добавьте в конец style.css */
+
+/* Стили для модального окна */
+#edit-modal input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+#edit-modal button:hover {
+    opacity: 0.9;
+}
+
+#edit-modal button:active {
+    transform: translateY(1px);
+}
+
+/* Анимация для уведомлений */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+/* Стили для модальных окон */
+#add-pancake-modal input:focus,
+#edit-modal input:focus {
+    outline: none;
+    border-color: #4CAF50 !important;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2) !important;
+}
+
+#add-pancake-modal button:hover,
+#edit-modal button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+#add-pancake-modal button:active,
+#edit-modal button:active {
+    transform: translateY(1px);
+}
+
+/* Анимация появления карточек */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(-20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
